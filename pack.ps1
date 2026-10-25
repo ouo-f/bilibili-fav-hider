@@ -1,7 +1,6 @@
-﻿# 发布专用脚本：把上一级目录（自用/源码）的运行时文件同步到本目录，再打包成可上传的 zip。
-# 用法：powershell -ExecutionPolicy Bypass -File publish\pack.ps1   （在根目录执行）
-#       或进入 publish 目录后执行  .\pack.ps1
-# 若 publish 被单独拷走（找不到上级源码），则跳过同步、直接用本目录现有文件打包。
+﻿# 打包本扩展为可上传商店/分发的 zip（manifest.json 位于压缩包根目录）。
+# 若上级目录存在源码（开发目录结构），会先同步最新运行时文件再打包；单独克隆本仓库时跳过同步。
+# 用法：.\pack.ps1
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 

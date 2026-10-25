@@ -6,17 +6,15 @@
 
 > **声明**：本项目为非官方的个人开源作品，与哔哩哔哩（bilibili）官方无任何关联；仅供个人学习交流使用。"b站"等名称仅为描述性指代。
 
-> 本文件夹是**发布/提交专用**目录，可直接整体推送 GitHub 或打包上传商店。
-> 日常在上一级目录改代码，发布前运行一次 `pack.ps1` 自动同步，避免发布过期代码。
-
 ---
 
 ## 安装（一次性，约1分钟）
 
-1. 打开 Edge，地址栏输入 `edge://extensions` 回车（Chrome 用 `chrome://extensions`）；
-2. 打开左下角（Edge 为左侧栏底部）的 **"开发人员模式"/"开发模式"** 开关；
-3. 点击 **"加载解压缩的扩展"**，选择本扩展文件夹；
-4. 工具栏出现扩展图标即安装成功。之后B站页面上立即生效，无需其他设置。
+1. 点击仓库右上角绿色 **Code** 按钮 → **Download ZIP**，解压到任意位置（或 `git clone` 本仓库）；
+2. 打开 Edge，地址栏输入 `edge://extensions` 回车（Chrome 用 `chrome://extensions`）；
+3. 打开左下角（Edge 为左侧栏底部）的 **"开发人员模式"/"开发模式"** 开关；
+4. 点击 **"加载解压缩的扩展"**，选择解压出来的文件夹；
+5. 工具栏出现扩展图标即安装成功。之后B站页面上立即生效，无需其他设置。
 
 > 卸载：扩展管理页移除即可，浏览器登记与配置数据随之清除，不留任何痕迹。
 
@@ -54,8 +52,8 @@
 
 ## 工作原理与性能
 
-- content script 注入B站页面，用 `MutationObserver` 监听 DOM（适配SPA动态渲染），命中的元素打上 `display:none !important`；
-- 扫描做了防抖合并（200ms），每次只是几个轻量的 `querySelectorAll`，CPU/内存占用可忽略；
+- content script 注入B站页面，用 `MutationObserver` 监听 DOM（适配SPA动态渲染），命中的元素打上隐藏样式（普通位置用 `display:none`；顶栏面板内用不改变布局的 `visibility:hidden`，以兼容面板展开动画）；
+- 扫描做了防抖合并（200ms），每次只是几个轻量的 `querySelectorAll`，实测最繁忙的视频页上 CPU 占用约 0.1% 单核；
 - **无 background**（MV3 service worker 不存在），浏览器不为此扩展保留任何常驻进程，任务管理器里看不到它；
 - 权限只有 `storage` / `scripting` / `activeTab` + B站全站子域名（`*.bilibili.com`，覆盖主站/空间/动态/搜索/账号中心/消息中心/直播等全部页面）的注入声明。
 
@@ -69,6 +67,7 @@
 | 内容区整列 | `.favlist-main` |
 | 收藏夹链接（卡片/旧版） | `a` 且 **pathname 含 `/favlist`**（注意 `spm_id_from=...favlist...` 追踪参数会误伤，已排除） |
 | 收藏弹窗 | 弹层容器含"新建收藏夹/创建收藏夹"文案（比类名抗改版） |
+| 顶栏悬浮面板 | `.favorite-panel-popover__nav .tab-item`（`.tab-item__title`=名称）+ `.favorite-panel-popover__content`（预览区） |
 
 B站改版导致失效时，改 `content.js` 顶部"常量区"的选择器即可，逻辑不用动。
 
@@ -83,58 +82,23 @@ B站改版导致失效时，改 `content.js` 顶部"常量区"的选择器即可
 - 扩展弹窗勾选"调试日志"后，B站页面控制台（F12）会输出 `[收藏夹隐藏]` 前缀的命中日志；
 - 页面控制台里把 **Context 环境下拉从 `top` 切换到本扩展**后，可用钩子手动切换规则测试：`__bvhTest.apply({rules:['关键字'], debug:true})`；`__bvhTest.apply({rules:[]})` 还原。钩子位于扩展的隔离环境，网页脚本接触不到它。
 
-## 文件结构（本目录）
+## 从源码构建
+
+在仓库根目录用 PowerShell 执行 `.\pack.ps1`，生成 `bilibili-fav-hider-v<版本号>.zip`（manifest.json 位于压缩包根目录），可直接用于 Edge / Chrome 商店上传。
+
+## 文件结构
 
 ```
-publish/              ← 发布/提交专用，可整体 git push 或打包
-├── manifest.json     # MV3 清单（由 pack.ps1 从上级同步）
+├── manifest.json     # MV3 清单
 ├── content.js        # 全部隐藏逻辑
 ├── popup.html / popup.js  # 配置面板
 ├── icons/            # 16/32/48/128 扩展图标
-├── pack.ps1          # 同步源码 + 打包 zip
+├── pack.ps1          # 打包 zip 脚本
 ├── LICENSE           # MIT
 ├── .gitignore        # 排除构建产物 zip
 └── README.md         # 本文件
 ```
 
-## 发布 / 打包
+## 许可证
 
-### 1) 打包 zip（商店上传 / 分发通用）
-
-在本目录执行：
-
-```powershell
-.\pack.ps1
-```
-
-脚本会先把上一级目录的最新运行时文件同步过来，再生成 `bilibili-fav-hider-v<版本号>.zip`（manifest.json 位于压缩包根目录，符合商店要求）。发新版本时先改 `manifest.json` 里的 `version` 再打包。
-
-### 2) 提交 GitHub
-
-在本目录执行（`.gitignore` 已排除构建产物 zip）：
-
-```bash
-git init
-git add .
-git commit -m "initial release: 本地隐藏B站网页版指定收藏夹"
-# 在 GitHub 网页创建空仓库（不要勾选自动生成 README/LICENSE）后：
-git remote add origin git@github.com:<你的用户名>/bilibili-fav-hider.git
-git branch -M main
-git push -u origin main
-```
-
-仓库 About 建议：`本地隐藏B站网页版指定收藏夹的极简 MV3 扩展（零网络请求，Edge/Chrome 通用）`
-
-### 3) 上架 Edge 加载项商店（可选）
-
-1. 注册 [Edge 合作伙伴中心](https://partner.microsoft.com/dashboard/microsoftedge)（免费）；
-2. "创建新扩展" → 上传 `pack.ps1` 生成的 zip；
-3. 商店素材需另备一张 300×300 店铺 Logo（可用 `icons/icon128.png` 放大重绘）与描述文案（可直接复用本 README 前两段）；
-4. 提交审核，一般数个工作日出结果。Chrome 商店同理（需一次性 $5 开发者注册费）。
-
-### 发布前自检
-
-- [ ] 运行过 `pack.ps1`（确保发布的是最新代码）；
-- [ ] 代码/文档中无真实 UID、fid、昵称（注意别把配置示例写成真数据）；
-- [ ] 使用截图里不暴露你自己的 UID、头像、未隐藏的收藏夹名；
-- [ ] `LICENSE` 版权行可换成你的 GitHub 用户名（不改也有效）。
+[MIT](LICENSE)
