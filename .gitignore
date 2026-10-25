@@ -1,0 +1,6 @@
+# GitHub/商店提交专用：构建产物不入库
+*.zip
+
+# 系统杂项
+Thumbs.db
+Desktop.ini

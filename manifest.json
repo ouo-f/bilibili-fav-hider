@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "b站收藏夹助手",
+  "version": "1.6.4",
+  "description": "本地隐藏B站网页版指定收藏夹（收藏页侧栏/顶栏悬浮面板/收藏弹窗/直链）。纯本地显示过滤：零网络请求、零风控。",
+  "permissions": ["storage", "scripting", "activeTab"],
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "b站收藏夹助手 · 设置",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*.bilibili.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ]
+}
